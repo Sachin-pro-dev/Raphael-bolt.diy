@@ -33,6 +33,8 @@ import { SemgrepDialog } from './SemgrepDialog';
 import { ZapDialog } from './ZapDialog';
 import { ZapScanPromptDialog } from './ZapScanPromptDialog';
 import { GitLeaksDialog } from './GitLeaksDialog';
+import { OsvDialog } from './OsvDialog';
+import type { OsvScanResult } from '~/types/osv';
 
 interface WorkspaceProps {
   chatStarted?: boolean;
@@ -345,6 +347,9 @@ export const Workbench = memo(
       scanDuration: number;
       error?: string;
     } | null>(null);
+    const [isOsvScanning, setIsOsvScanning] = useState(false);
+    const [showOsvDialog, setShowOsvDialog] = useState(false);
+    const [osvResult, setOsvResult] = useState<OsvScanResult | null>(null);
 
     const setSelectedView = (view: WorkbenchViewType) => {
       workbenchStore.currentView.set(view);
@@ -819,6 +824,81 @@ export const Workbench = memo(
       }
     }, [files]);
 
+    const handleOsvScan = useCallback(async () => {
+      setIsOsvScanning(true);
+
+      try {
+        console.log('[OSV] Starting dependency scan...');
+        console.log('[OSV] Total files in store:', Object.keys(files).length);
+
+        // Filter for manifest files (package.json, requirements.txt, go.mod, etc.)
+        const manifestFiles = Object.entries(files)
+          .map(([filePath, dirent]) => {
+            if (!dirent || dirent.type !== 'file' || dirent.isBinary) {
+              return null;
+            }
+
+            const isManifest =
+              /package\.json$|requirements\.txt$|go\.mod$|Cargo\.toml$|pom\.xml$|composer\.json$/i.test(filePath);
+
+            if (!isManifest) {
+              return null;
+            }
+
+            return {
+              path: filePath.replace(/^\/home\/project\//, ''),
+              content: dirent.content,
+            };
+          })
+          .filter((f): f is { path: string; content: string } => f !== null);
+
+        console.log('[OSV] Manifest files found:', manifestFiles.length);
+
+        if (manifestFiles.length === 0) {
+          toast.info('No dependency files found. Add package.json, requirements.txt, go.mod, or other manifest files.');
+          setIsOsvScanning(false);
+
+          return;
+        }
+
+        const response = await fetch('/api/osv-scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: manifestFiles }),
+        });
+
+        const result: OsvScanResult = await response.json();
+
+        console.log('[OSV] Scan result:', result);
+
+        setOsvResult(result);
+        setShowOsvDialog(true);
+
+        if (result.success && result.stats.total > 0) {
+          if (result.stats.critical > 0) {
+            toast.error(`CRITICAL: Found ${result.stats.critical} critical vulnerabilities!`, { autoClose: 10000 });
+          } else {
+            toast.warning(
+              `Found ${result.stats.total} ${result.stats.total === 1 ? 'vulnerability' : 'vulnerabilities'}`,
+              {
+                autoClose: 5000,
+              },
+            );
+          }
+        } else if (result.success) {
+          toast.success(`No vulnerabilities found! Scanned ${result.scannedPackages} packages.`, { autoClose: 3000 });
+        } else {
+          console.error('[OSV] Scan failed:', result.error);
+          toast.error(result.error || 'Dependency scan failed');
+        }
+      } catch (error: any) {
+        console.error('[OSV] Error:', error);
+        toast.error('Failed to run dependency scan');
+      } finally {
+        setIsOsvScanning(false);
+      }
+    }, [files]);
+
     return (
       chatStarted && (
         <motion.div
@@ -960,6 +1040,27 @@ export const Workbench = memo(
                         </button>
                       </div>
 
+                      {/* OSV Dependency Scan Button */}
+                      <div className="flex ml-1.5">
+                        <button
+                          onClick={handleOsvScan}
+                          disabled={isOsvScanning || streaming}
+                          className="group relative flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 transition-all duration-300 hover:bg-cyan-500/15 hover:border-cyan-400/60 hover:shadow-[0_0_12px_rgba(0,229,255,0.2)] hover:text-cyan-300 active:scale-95 [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-40 [&:is(:disabled,.disabled)]:hover:shadow-none"
+                        >
+                          {isOsvScanning ? (
+                            <>
+                              <div className="i-ph:spinner animate-spin" />
+                              Scanning...
+                            </>
+                          ) : (
+                            <>
+                              <div className="i-ph:package transition-transform duration-200 group-hover:scale-110" />
+                              Dependency Scan
+                            </>
+                          )}
+                        </button>
+                      </div>
+
                       {/* Toggle Terminal Button */}
                       <div className="flex ml-1.5">
                         <button
@@ -1043,6 +1144,14 @@ export const Workbench = memo(
             isOpen={showGitleaksDialog}
             onClose={() => setShowGitleaksDialog(false)}
             result={gitleaksResult}
+            onInsertIntoPrompt={handleInsertSemgrepResults}
+          />
+
+          {/* OSV Dependency Scan Dialog */}
+          <OsvDialog
+            isOpen={showOsvDialog}
+            onClose={() => setShowOsvDialog(false)}
+            result={osvResult}
             onInsertIntoPrompt={handleInsertSemgrepResults}
           />
         </motion.div>

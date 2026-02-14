@@ -9,7 +9,11 @@
       "WebSearch",
       "Bash(npm run lint:*)",
       "Bash(dir:*)",
-      "Bash(git stash push:*)"
+      "Bash(git stash push:*)",
+      "Bash(curl:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(tee:*)",
+      "Bash(pnpm run lint:*)"
     ]
   }
 }
