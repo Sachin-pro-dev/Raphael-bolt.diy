@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(docker image inspect:*)",
+      "Bash(docker run:*)",
+      "Bash(pnpm run typecheck:*)",
+      "WebSearch",
+      "Bash(npm run lint:*)",
+      "Bash(dir:*)",
+      "Bash(git stash push:*)"
+    ]
+  }
+}
