@@ -122,8 +122,12 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
               'outline-none',
               'group',
             )}
-            onClick={() =>
-              window.open('https://github.com/stackblitz-labs/bolt.diy/issues/new?template=bug_report.yml', '_blank') /* Raphael */
+            onClick={
+              () =>
+                window.open(
+                  'https://github.com/stackblitz-labs/bolt.diy/issues/new?template=bug_report.yml',
+                  '_blank',
+                ) /* Raphael */
             }
           >
             <div className="i-ph:bug w-4 h-4 text-gray-400 group-hover:text-cyan-500 dark:group-hover:text-cyan-400 transition-colors" />

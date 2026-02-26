@@ -85,7 +85,7 @@ export async function action({ request }: ActionFunctionArgs) {
         // Mem0 expects messages array (not a string)
         const messages = [
           {
-            role: 'user',
+            role: 'user' as const,
             content,
           },
         ];

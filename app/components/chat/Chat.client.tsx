@@ -391,7 +391,7 @@ export const ChatImpl = memo(
           })
             .then((res) => res.json())
             .then((result) => {
-              if (result.success) {
+              if ((result as { success: boolean }).success) {
                 toast.success('Context saved to memory!');
               } else {
                 toast.error('Failed to save context');

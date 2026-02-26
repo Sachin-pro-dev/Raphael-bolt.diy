@@ -290,7 +290,7 @@ export class Mem0Service {
     };
 
     // Try Mem0 first
-    if (this._isAvailable()) {
+    if (this.isAvailable()) {
       try {
         console.log('[Mem0Service] Saving to Mem0 API...');
 
@@ -352,7 +352,7 @@ export class Mem0Service {
    */
   async getMemories(filters?: { chatId?: string; type?: string; limit?: number }): Promise<Memory[]> {
     // Try Mem0 first
-    if (this._isAvailable()) {
+    if (this.isAvailable()) {
       try {
         const result = (await this._client!.getAll({
           user_id: this.config.userId || 'default',
@@ -399,7 +399,7 @@ export class Mem0Service {
    */
   async searchMemories(query: string, filters?: { chatId?: string; limit?: number }): Promise<MemorySearchResult[]> {
     // Try Mem0 semantic search first
-    if (this._isAvailable()) {
+    if (this.isAvailable()) {
       try {
         const result = (await this._client!.search(query, {
           user_id: this.config.userId || 'default',
@@ -440,7 +440,7 @@ export class Mem0Service {
    */
   async deleteMemory(memoryId: string): Promise<MemoryOperationResult> {
     // Try Mem0 first
-    if (this._isAvailable()) {
+    if (this.isAvailable()) {
       try {
         await this._client!.delete(memoryId);
 

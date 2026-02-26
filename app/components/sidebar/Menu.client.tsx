@@ -340,7 +340,9 @@ export const Menu = () => {
         <div className="h-12 flex items-center justify-between px-4 border-b border-bolt-elements-borderColor bg-transparent rounded-tr-3xl">
           <div className="text-gray-900 dark:text-white font-medium"></div>
           <div className="flex items-center gap-3">
-            <HelpButton onClick={() => window.open('https://stackblitz-labs.github.io/bolt.diy/', '_blank') /* Raphael */} />
+            <HelpButton
+              onClick={() => window.open('https://stackblitz-labs.github.io/bolt.diy/', '_blank') /* Raphael */}
+            />
             <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
               {profile?.username || 'Guest User'}
             </span>
